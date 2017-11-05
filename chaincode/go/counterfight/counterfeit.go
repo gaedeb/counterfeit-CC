@@ -62,6 +62,8 @@ func (t *CounterfeitCC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.sellCarton(stub, args)
 	case "sellPackage":
 		return t.sellPackage(stub, args)
+	case "getPackageHistory":
+		return t.getPackageHistory(stub, args)
 	default:
 		return shim.Error("Incorrect function name: " + function)
 	}
@@ -147,7 +149,7 @@ func (t *CounterfeitCC) sellCarton(stub shim.ChaincodeStubInterface, args []stri
 		return shim.Error("Error extracting user identity")
 	}
 
-	sellCarton := SellCarton{}
+	sellCarton := CartonRef{}
 	err = json.Unmarshal([]byte(args[0]), &sellCarton)
 	if err != nil {
 		return shim.Error("Error parsing sellCarton request json")
@@ -180,7 +182,7 @@ func (t *CounterfeitCC) sellPackage(stub shim.ChaincodeStubInterface, args []str
 		return shim.Error("Error extracting user identity")
 	}
 
-	sellPackage := SellPackage{}
+	sellPackage := PackageRef{}
 	err = json.Unmarshal([]byte(args[0]), &sellPackage)
 	if err != nil {
 		return shim.Error("Error parsing sellPackage request json")
@@ -201,4 +203,45 @@ func (t *CounterfeitCC) sellPackage(stub shim.ChaincodeStubInterface, args []str
 	}
 
 	return shim.Success(nil)
+}
+
+func (t *CounterfeitCC) getPackageHistory(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("expected 1 argument")
+	}
+
+	packageRef := PackageRef{}
+	err := json.Unmarshal([]byte(args[0]), &packageRef)
+	if err != nil {
+		return shim.Error("Error parsing sellPackage request json")
+	}
+
+	carton, err := t.getCarton(stub, packageRef.CartonId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	pckg, err := t.getPackage(stub, packageRef.CartonId, packageRef.PackageId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	key, _ := stub.CreateCompositeKey(IndexCartons, []string{packageRef.CartonId})
+	history, err := t.getHistory(stub, key)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	response := PackageHistoryResponse{
+		Carton: carton,
+		Package: pckg,
+		OwnerHistory: history,
+	}
+
+	data, _ := json.Marshal(response)
+	if err != nil {
+		return shim.Error("Error generating package history response")
+	}
+
+	return shim.Success(data)
 }

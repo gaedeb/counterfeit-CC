@@ -32,12 +32,24 @@ type CreateCartonResponse struct {
 	PackageList		[]Package `json:"packages"`
 }
 
-type SellCarton struct {
+type CartonRef struct {
 	CartonId    	string `json:"cartonId"`
 	Buyer        	string `json:"buyer"`
 }
 
-type SellPackage struct {
+type PackageRef struct {
 	CartonId    	string `json:"cartonId"`
 	PackageId    	string `json:"packageId"`
+}
+
+type HistoryEntry struct {
+	Owner 		string `json:"owner"`
+	TxId 		string `json:"txId"`
+	Timestamp 	int64 `json:"timeStamp"`
+}
+
+type PackageHistoryResponse struct {
+	Carton Carton `json:"carton"`
+	Package Package `json:"package"`
+	OwnerHistory []HistoryEntry `json:"ownerHistory"`
 }
