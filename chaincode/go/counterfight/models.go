@@ -1,5 +1,7 @@
 package main
 
+import "time"
+
 type Settings struct {
 	Admin        string `json:"admin"`
 }
@@ -7,7 +9,7 @@ type Settings struct {
 type Carton struct {
 	Id 				string `json:"id"`
 	Name			string `json:"name"`
-	ProductionDate 	int64 `json:"productionDate"`
+	ProductionDate 	time.Time `json:"productionDate"`
 	Description		string `json:"description"`
 	PackageNum		int64 `json:"packageNum"`
 	Producer		string `json:"producer"`
@@ -17,7 +19,7 @@ type Carton struct {
 type Package struct {
 	Id 				string `json:"id"`
 	Sold   			bool `json:"sold"`
-	SellDate 		int64 `json:"sellDate"`
+	SellDate 		time.Time `json:"sellDate"`
 }
 
 type User struct {
@@ -31,6 +33,11 @@ type CreateCartonResponse struct {
 }
 
 type SellCarton struct {
-	CartonId    	string `json:"catonId"`
+	CartonId    	string `json:"cartonId"`
 	Buyer        	string `json:"buyer"`
+}
+
+type SellPackage struct {
+	CartonId    	string `json:"cartonId"`
+	PackageId    	string `json:"packageId"`
 }

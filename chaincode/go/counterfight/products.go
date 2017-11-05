@@ -4,6 +4,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	"errors"
 	"encoding/json"
+	"time"
 )
 
 
@@ -77,6 +78,24 @@ func (t *CounterfeitCC) getCarton(stub shim.ChaincodeStubInterface, cartonId str
 	return carton, nil
 }
 
+func (t *CounterfeitCC) getPackage(stub shim.ChaincodeStubInterface, cartonId string, packageId string) (Package, error) {
+	key, _ := stub.CreateCompositeKey(IndexPackage, []string{cartonId, packageId})
+	data, err := stub.GetState(key)
+	if err != nil {
+		return nil, errors.New("Error getting package: " + err.Error())
+	}  else if data == nil {
+		return nil, errors.New("No package for " + cartonId + ":" + packageId)
+	}
+
+	pckg := Package{}
+	err = json.Unmarshal(data, &pckg)
+	if err != nil {
+		return nil, errors.New("Error parsing package json: " + err.Error())
+	}
+
+	return pckg, nil
+}
+
 func (t *CounterfeitCC) updateCartonOwner(stub shim.ChaincodeStubInterface, cartonId string, newOwner string) error {
 	carton, err := t.getCarton(stub, cartonId)
 	if err != nil {
@@ -95,6 +114,30 @@ func (t *CounterfeitCC) updateCartonOwner(stub shim.ChaincodeStubInterface, cart
 
 	if err != nil {
 		return errors.New("Error storing carton: " + err.Error())
+	}
+
+	return nil
+}
+
+func (t *CounterfeitCC) markPackageSold(stub shim.ChaincodeStubInterface, cartonId string, packageId string) error {
+	pckg, err := t.getPackage(stub, cartonId, packageId)
+	if err != nil {
+		return err
+	}
+
+	pckg.Sold = true
+	pckg.SellDate = time.Now()
+
+	key, _ := stub.CreateCompositeKey(IndexPackage, []string{cartonId, packageId})
+
+	data, err := json.Marshal(pckg)
+	if err != nil {
+		return errors.New("Error marshaling package object: " + err.Error())
+	}
+	err = stub.PutState(key, data)
+
+	if err != nil {
+		return errors.New("Error storing package: " + err.Error())
 	}
 
 	return nil

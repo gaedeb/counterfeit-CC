@@ -5,6 +5,7 @@ import (
 	"strconv"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
+	"time"
 )
 
 type CounterfeitCC struct {
@@ -58,7 +59,9 @@ func (t *CounterfeitCC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 	case "createCarton":
 		return t.registerCarton(stub, args)
 	case "sellCarton":
-		return t.registerCarton(stub, args)
+		return t.sellCarton(stub, args)
+	case "sellPackage":
+		return t.sellPackage(stub, args)
 	default:
 		return shim.Error("Incorrect function name: " + function)
 	}
@@ -116,6 +119,7 @@ func (t *CounterfeitCC) registerCarton(stub shim.ChaincodeStubInterface, args []
 
 	carton.Producer = caller
 	carton.Id = uintToString(uint64Random())
+	carton.ProductionDate = time.Now()
 
 	packages, err := t.createCarton(stub, carton.Id, carton)
 
@@ -159,6 +163,39 @@ func (t *CounterfeitCC) sellCarton(stub shim.ChaincodeStubInterface, args []stri
 	}
 
 	err = t.updateCartonOwner(stub, sellCarton.CartonId, sellCarton.Buyer)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(nil)
+}
+
+func (t *CounterfeitCC) sellPackage(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("expected 1 argument")
+	}
+
+	caller, err := CallerCN(stub)
+	if err != nil {
+		return shim.Error("Error extracting user identity")
+	}
+
+	sellPackage := SellPackage{}
+	err = json.Unmarshal([]byte(args[0]), &sellPackage)
+	if err != nil {
+		return shim.Error("Error parsing sellPackage request json")
+	}
+
+	carton, err := t.getCarton(stub, sellPackage.CartonId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	if carton.Owner != caller {
+		return shim.Error("Carton doesn't belong to you!")
+	}
+
+	err = t.markPackageSold(stub, sellPackage.CartonId, sellPackage.PackageId)
 	if err != nil {
 		return shim.Error(err.Error())
 	}
