@@ -29,3 +29,8 @@ type CreateCartonResponse struct {
 	Carton			Carton `json:"carton"`
 	PackageList		[]Package `json:"packages"`
 }
+
+type SellCarton struct {
+	CartonId    	string `json:"catonId"`
+	Buyer        	string `json:"buyer"`
+}

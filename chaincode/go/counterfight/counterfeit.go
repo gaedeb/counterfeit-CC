@@ -57,6 +57,8 @@ func (t *CounterfeitCC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return t.registerUser(stub, args)
 	case "createCarton":
 		return t.registerCarton(stub, args)
+	case "sellCarton":
+		return t.registerCarton(stub, args)
 	default:
 		return shim.Error("Incorrect function name: " + function)
 	}
@@ -128,4 +130,38 @@ func (t *CounterfeitCC) registerCarton(stub shim.ChaincodeStubInterface, args []
 	}
 
 	return shim.Success(data)
+}
+
+
+func (t *CounterfeitCC) sellCarton(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("expected 1 argument")
+	}
+
+	caller, err := CallerCN(stub)
+	if err != nil {
+		return shim.Error("Error extracting user identity")
+	}
+
+	sellCarton := SellCarton{}
+	err = json.Unmarshal([]byte(args[0]), &sellCarton)
+	if err != nil {
+		return shim.Error("Error parsing sellCarton request json")
+	}
+
+	carton, err := t.getCarton(stub, sellCarton.CartonId)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	if carton.Owner != caller {
+		return shim.Error("Carton doesn't belong to you!")
+	}
+
+	err = t.updateCartonOwner(stub, sellCarton.CartonId, sellCarton.Buyer)
+	if err != nil {
+		return shim.Error(err.Error())
+	}
+
+	return shim.Success(nil)
 }
