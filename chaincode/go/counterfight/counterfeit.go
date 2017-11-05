@@ -6,6 +6,7 @@ import (
 	"github.com/hyperledger/fabric/core/chaincode/shim"
 	pb "github.com/hyperledger/fabric/protos/peer"
 	"time"
+	"fmt"
 )
 
 type CounterfeitCC struct {
@@ -244,4 +245,11 @@ func (t *CounterfeitCC) getPackageHistory(stub shim.ChaincodeStubInterface, args
 	}
 
 	return shim.Success(data)
+}
+
+func main() {
+	err := shim.Start(new(CounterfeitCC))
+	if err != nil {
+		fmt.Printf("Error starting CounterfeitCC: %s", err)
+	}
 }
