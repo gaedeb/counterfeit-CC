@@ -5,8 +5,8 @@ import (
 	// "errors"
 	"github.com/hyperledger/fabric/common/util"
 	"github.com/hyperledger/fabric/core/chaincode/shim"
-	"github.com/loyalty/chaincode/mock"
-	"github.com/loyalty/chaincode/testdata"
+	"./mock"
+	"./testdata"
 	"testing"
 )
 

@@ -7,7 +7,7 @@ import (
 )
 
 
-func (t *CounterfeitCC) createCarton(stub shim.ChaincodeStubInterface, id string, carton Carton) ([]*Package, error) {
+func (t *CounterfeitCC) createCarton(stub shim.ChaincodeStubInterface, id string, carton Carton) (*[]Package, error) {
 
 	key, _ := stub.CreateCompositeKey(IndexCartons, []string{id})
 
@@ -22,24 +22,23 @@ func (t *CounterfeitCC) createCarton(stub shim.ChaincodeStubInterface, id string
 		return nil, errors.New("Error creating user '" + id + "': " + err.Error())
 	}
 
-	var result []*Package = []*Package{}
+	var result []Package = []Package{}
 	for i := 0; carton.PackageNum; i++ {
 
 		pckg := Package{
+			Id: uintToString(uint64Random()),
 			Sold: false,
 		}
 
-		packageId := uintToString(uint64Random())
-
-		err := t.createPackage(stub, id, packageId, pckg)
+		err := t.createPackage(stub, id, pckg.Id, pckg)
 		if err != nil {
 			return nil, err
 		}
 
-		result = append(result, &pckg)
+		result = append(result, pckg)
 	}
 
-	return result, nil
+	return &result, nil
 }
 
 func (t *CounterfeitCC) createPackage(stub shim.ChaincodeStubInterface, cartonId string, id string, pckg Package) error {

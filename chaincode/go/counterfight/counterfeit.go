@@ -55,6 +55,8 @@ func (t *CounterfeitCC) Invoke(stub shim.ChaincodeStubInterface) pb.Response {
 		return shim.Success(info)
 	case "createUser":
 		return t.registerUser(stub, args)
+	case "createCarton":
+		return t.registerCarton(stub, args)
 	default:
 		return shim.Error("Incorrect function name: " + function)
 	}
@@ -92,4 +94,38 @@ func (t *CounterfeitCC) registerUser(stub shim.ChaincodeStubInterface, args []st
 	}
 
 	return shim.Success(nil)
+}
+
+func (t *CounterfeitCC) registerCarton(stub shim.ChaincodeStubInterface, args []string) pb.Response {
+	if len(args) != 1 {
+		return shim.Error("expected 1 argument")
+	}
+
+	caller, err := CallerCN(stub)
+	if err != nil {
+		return shim.Error("Error extracting user identity")
+	}
+
+	carton := Carton{}
+	err = json.Unmarshal([]byte(args[0]), &carton)
+	if err != nil {
+		return shim.Error("Error parsing carton json")
+	}
+
+	carton.Producer = caller
+	carton.Id = uintToString(uint64Random())
+
+	packages, err := t.createCarton(stub, carton.Id, carton)
+
+	response := CreateCartonResponse{
+		Carton: carton,
+		PackageList: *packages,
+	}
+
+	data, _ := json.Marshal(response)
+	if err != nil {
+		return shim.Error("Error generating response")
+	}
+
+	return shim.Success(data)
 }
