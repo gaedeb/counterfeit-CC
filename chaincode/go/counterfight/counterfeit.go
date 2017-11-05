@@ -15,6 +15,7 @@ const IndexProducer = "cn~producer"
 const IndexPharmacy = "cn~pharmacy"
 const IndexReseller = "cn~reseller"
 const IndexCartons = "cn~carton"
+const IndexPackage = "cn~package"
 
 func (t *CounterfeitCC) Init(stub shim.ChaincodeStubInterface) pb.Response {
 	function, args := stub.GetFunctionAndParameters()
